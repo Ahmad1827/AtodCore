@@ -20,7 +20,7 @@ def get_session():
         yield session
 
 app = FastAPI(
-    title="GameBaaS API",
+    title="AtodCore API",
     version="1.0.0"
 )
 
@@ -40,7 +40,20 @@ def get_leaderboard(session: Session = Depends(get_session)):
 
 @app.post("/submit_score")
 def submit_new_score(new_score: Score, session: Session = Depends(get_session)):
-    session.add(new_score)
-    session.commit()
-    session.refresh(new_score)
-    return {"message": "Scor salvat!", "scor_primit": new_score}
+    statement = select(Score).where(Score.username == new_score.username).where(Score.game_id == new_score.game_id)
+    existing_score = session.exec(statement).first()
+
+    if existing_score:
+        if new_score.score > existing_score.score:
+            existing_score.score = new_score.score
+            session.add(existing_score)
+            session.commit()
+            session.refresh(existing_score)
+            return {"message": "Nou record salvat!", "scor_primit": existing_score}
+        else:
+            return {"message": "Scorul nu a fost depășit.", "scor_primit": existing_score}
+    else:
+        session.add(new_score)
+        session.commit()
+        session.refresh(new_score)
+        return {"message": "Scor nou salvat!", "scor_primit": new_score}
