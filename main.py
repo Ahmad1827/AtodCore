@@ -42,10 +42,16 @@ def read_root():
     return {"status": "online"}
 
 @app.get("/leaderboard")
-def get_leaderboard(session: Session = Depends(get_session)):
+def get_global_leaderboard(session: Session = Depends(get_session)):
     statement = select(Score).order_by(Score.score.desc()).limit(10)
     scores = session.exec(statement).all()
     return {"top_players": scores}
+
+@app.get("/leaderboard/{game_id}")
+def get_game_leaderboard(game_id: str, session: Session = Depends(get_session)):
+    statement = select(Score).where(Score.game_id == game_id).order_by(Score.score.desc()).limit(10)
+    scores = session.exec(statement).all()
+    return {"game": game_id, "top_players": scores}
 
 @app.post("/submit_score")
 def submit_new_score(new_score: Score, session: Session = Depends(get_session), api_key: str = Depends(get_api_key)):
