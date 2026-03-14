@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, Security
 from fastapi.security import APIKeyHeader
+from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 
 API_KEY = "ATOD_SECRET_KEY_2026"
@@ -31,6 +32,14 @@ def get_session():
 app = FastAPI(
     title="AtodCore API",
     version="1.0.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.on_event("startup")
