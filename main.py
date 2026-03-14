@@ -1,5 +1,14 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException, Security
+from fastapi.security import APIKeyHeader
 from sqlmodel import Field, Session, SQLModel, create_engine, select
+
+API_KEY = "ATOD_SECRET_KEY_2026"
+api_key_header = APIKeyHeader(name="X-API-Key")
+
+def get_api_key(api_key_header: str = Security(api_key_header)):
+    if api_key_header != API_KEY:
+        raise HTTPException(status_code=403, detail="Acces Respins: API Key invalidă!")
+    return api_key_header
 
 class Score(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -39,7 +48,7 @@ def get_leaderboard(session: Session = Depends(get_session)):
     return {"top_players": scores}
 
 @app.post("/submit_score")
-def submit_new_score(new_score: Score, session: Session = Depends(get_session)):
+def submit_new_score(new_score: Score, session: Session = Depends(get_session), api_key: str = Depends(get_api_key)):
     statement = select(Score).where(Score.username == new_score.username).where(Score.game_id == new_score.game_id)
     existing_score = session.exec(statement).first()
 
